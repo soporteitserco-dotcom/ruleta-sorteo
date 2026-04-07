@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Ruleta de Sorteo</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F7F5F0;
+    --surface: #FFFFFF;
+    --surface2: #F0EDE8;
+    --border: rgba(0,0,0,0.10);
+    --border-strong: rgba(0,0,0,0.18);
+    --text: #1A1916;
+    --text-muted: #7A7870;
+    --text-hint: #AEACA6;
+    --accent: #2D6BE4;
+    --accent-bg: #EBF1FD;
+    --accent-text: #1A4BAD;
+    --success-bg: #E8F7EF;
+    --success-text: #0F5233;
+    --success: #1A7A4A;
+    --danger: #C0392B;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  header {
+    width: 100%;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .logo {
+    width: 30px; height: 30px;
+    background: var(--text);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .logo svg { width: 17px; height: 17px; }
+
+  header h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.02em; }
+  header span { font-size: 11px; color: var(--text-muted); font-family: 'DM Mono', monospace; margin-left: 4px; }
+
+  /* TABS - solo mobile */
+  .tabs {
+    display: none;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 11px 0;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* LAYOUT DESKTOP */
+  main {
+    width: 100%;
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    flex: 1;
+    min-width: 220px;
+    max-width: 260px;
+  }
+
+  .panel-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  .input-row { display: flex; gap: 7px; margin-bottom: 6px; }
+
+  input[type="text"] {
+    flex: 1;
+    padding: 8px 10px;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    background: var(--surface2);
+    color: var(--text);
+    outline: none;
+    transition: border-color .15s;
+    -webkit-appearance: none;
+  }
+
+  input[type="text"]:focus { border-color: var(--accent); background: var(--surface); }
+
+  button {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: var(--radius);
+    transition: all .15s;
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    color: var(--text);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .btn-add { padding: 8px 12px; font-size: 14px; white-space: nowrap; }
+  .btn-add:hover, .btn-add:active { background: var(--surface2); }
+
+  .counter {
+    font-size: 11px;
+    color: var(--text-hint);
+    font-family: 'DM Mono', monospace;
+    text-align: right;
+    margin-bottom: 6px;
+    min-height: 16px;
+  }
+
+  .names-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .names-list::-webkit-scrollbar { width: 4px; }
+  .names-list::-webkit-scrollbar-track { background: transparent; }
+  .names-list::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+
+  .names-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13.5px;
+    padding: 7px 9px;
+    border-radius: 7px;
+    background: var(--surface2);
+    color: var(--text);
+  }
+
+  .names-list li.elim { opacity: .35; text-decoration: line-through; }
+
+  .del-btn {
+    background: none; border: none; cursor: pointer;
+    font-size: 13px; color: var(--text-hint);
+    padding: 2px 4px; border-radius: 4px; line-height: 1; flex-shrink: 0;
+  }
+
+  .del-btn:hover, .del-btn:active { color: var(--danger); }
+
+  .empty-hint { font-size: 13px; color: var(--text-hint); text-align: center; padding: .75rem 0; }
+
+  .btn-reset {
+    margin-top: 12px; width: 100%; padding: 7px;
+    font-size: 12px; color: var(--text-muted); border-color: var(--border);
+  }
+
+  .btn-reset:hover, .btn-reset:active { background: var(--surface2); }
+
+  /* WHEEL COLUMN */
+  .wheel-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .875rem;
+    flex: 2;
+  }
+
+  .canvas-wrap { position: relative; }
+  canvas { display: block; border-radius: 50%; }
+
+  .pointer {
+    position: absolute; top: -16px; left: 50%; transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 13px solid transparent;
+    border-right: 13px solid transparent;
+    border-top: 26px solid var(--text);
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,.2));
+  }
+
+  .result-box {
+    width: 100%; max-width: 300px; min-height: 50px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 10px 18px; border-radius: var(--radius-lg);
+    border: 1px solid var(--border); background: var(--surface); text-align: center;
+  }
+
+  #result-text { font-size: 15px; font-weight: 500; color: var(--text-hint); }
+
+  .btn-spin {
+    width: 100%; max-width: 300px; padding: 12px;
+    font-size: 15px; font-weight: 600;
+    border-color: var(--accent); color: var(--accent-text); background: var(--accent-bg);
+  }
+
+  .btn-spin:hover:not(:disabled), .btn-spin:active:not(:disabled) { background: #dde8fb; }
+  .btn-spin:disabled { opacity: .4; cursor: not-allowed; }
+
+  .btn-copy {
+    width: 100%; max-width: 300px; padding: 9px; font-size: 13px;
+    color: var(--success-text); background: var(--success-bg);
+    border-color: rgba(26,122,74,.25);
+  }
+
+  .btn-copy:hover:not(:disabled), .btn-copy:active:not(:disabled) { background: #d4f0e2; }
+  .btn-copy:disabled { opacity: .35; cursor: not-allowed; }
+
+  .toast {
+    font-size: 12px; font-family: 'DM Mono', monospace;
+    color: var(--success); min-height: 16px; text-align: center;
+  }
+
+  /* ══════════════════════════════
+     MÓVIL  ≤ 640px
+  ══════════════════════════════ */
+  @media (max-width: 640px) {
+    .tabs { display: flex; }
+
+    main { padding: 1rem; flex-direction: column; align-items: center; gap: 0; }
+
+    .panel { width: 100%; max-width: 100%; display: none; }
+    .panel.tab-visible { display: block; }
+
+    .wheel-col { width: 100%; display: none; }
+    .wheel-col.tab-visible { display: flex; }
+
+    .result-box, .btn-spin, .btn-copy { max-width: 100%; }
+    .names-list { max-height: 200px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="9" stroke="white" stroke-width="1.8"/>
+      <line x1="12" y1="3" x2="12" y2="21" stroke="white" stroke-width="1.8"/>
+      <line x1="3" y1="12" x2="21" y2="12" stroke="white" stroke-width="1.8"/>
+      <circle cx="12" cy="12" r="2.2" fill="white"/>
+    </svg>
+  </div>
+  <h1>Ruleta de Sorteo</h1>
+  <span>v1.0</span>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" id="tab-ruleta" onclick="switchTab('ruleta')">Ruleta</button>
+  <button class="tab-btn" id="tab-lista" onclick="switchTab('lista')">Participantes</button>
+</nav>
+
+<main>
+  <div class="panel" id="panel-lista">
+    <div class="panel-title">Participantes</div>
+    <div class="input-row">
+      <input type="text" id="name-input" placeholder="Nombre..." />
+      <button class="btn-add" onclick="addName()">+ Agregar</button>
+    </div>
+    <div class="counter" id="counter"></div>
+    <ul class="names-list" id="names-list"></ul>
+    <button class="btn-reset" onclick="resetAll()">↺ Reiniciar todo</button>
+  </div>
+
+  <div class="wheel-col" id="panel-ruleta">
+    <div class="canvas-wrap" id="canvas-wrap">
+      <div class="pointer" id="pointer"></div>
+      <canvas id="wheel"></canvas>
+    </div>
+    <div class="result-box">
+      <span id="result-text">Agrega nombres y gira</span>
+    </div>
+    <button id="spin-btn" class="btn-spin" onclick="spin()" disabled>Girar ruleta</button>
+    <button id="copy-btn" class="btn-copy" onclick="copyResult()" disabled>Copiar resultado al portapapeles</button>
+    <div class="toast" id="toast">&nbsp;</div>
+  </div>
+</main>
+
+<script>
+const COLORS = [
+  ['#CECBF6','#3C3489'],['#9FE1CB','#085041'],['#F5C4B3','#712B13'],
+  ['#B5D4F4','#0C447C'],['#C0DD97','#27500A'],['#FAC775','#633806'],
+  ['#F4C0D1','#72243E'],['#D3D1C7','#5A5855'],['#F7C1C1','#791F1F']
+];
+
+let names = [], eliminated = [], spinning = false, angle = 0, log = [];
+
+// ── Tabs ──
+function switchTab(tab) {
+  document.getElementById('tab-ruleta').classList.toggle('active', tab === 'ruleta');
+  document.getElementById('tab-lista').classList.toggle('active', tab === 'lista');
+  document.getElementById('panel-ruleta').classList.toggle('tab-visible', tab === 'ruleta');
+  document.getElementById('panel-lista').classList.toggle('tab-visible', tab === 'lista');
+  if (tab === 'ruleta') setTimeout(drawWheel, 50);
+}
+
+function initTabs() {
+  if (window.innerWidth <= 640) {
+    document.getElementById('panel-ruleta').classList.add('tab-visible');
+    document.getElementById('panel-lista').classList.remove('tab-visible');
+  } else {
+    document.getElementById('panel-ruleta').classList.remove('tab-visible');
+    document.getElementById('panel-lista').classList.remove('tab-visible');
+  }
+  resizeCanvas();
+}
+
+window.addEventListener('resize', initTabs);
+
+// ── Canvas responsive ──
+const canvasEl = document.getElementById('wheel');
+const ctx = canvasEl.getContext('2d');
+
+function canvasSize() {
+  if (window.innerWidth <= 640) {
+    return Math.min(window.innerWidth - 60, 280);
+  }
+  return 300;
+}
+
+function resizeCanvas() {
+  const s = canvasSize();
+  canvasEl.width = s; canvasEl.height = s;
+  canvasEl.style.width = s + 'px'; canvasEl.style.height = s + 'px';
+  const wrap = document.getElementById('canvas-wrap');
+  wrap.style.width = s + 'px'; wrap.style.height = s + 'px';
+  const ptr = document.getElementById('pointer');
+  const pw = Math.round(s * 0.087);
+  ptr.style.borderLeftWidth = pw + 'px';
+  ptr.style.borderRightWidth = pw + 'px';
+  ptr.style.borderTopWidth = (pw * 2) + 'px';
+  ptr.style.top = -(pw * 2 + 2) + 'px';
+  drawWheel();
+}
+
+// ── Logic ──
+function active() { return names.filter(n => !eliminated.includes(n)); }
+
+function addName() {
+  const inp = document.getElementById('name-input');
+  const v = inp.value.trim();
+  if (!v || names.includes(v)) { inp.value = ''; return; }
+  names.push(v); inp.value = ''; render();
+  if (window.innerWidth <= 640) switchTab('ruleta');
+}
+
+document.getElementById('name-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addName();
+});
+
+function removeName(n) {
+  names = names.filter(x => x !== n);
+  eliminated = eliminated.filter(x => x !== n);
+  log = log.filter(l => !l.includes(n));
+  render();
+}
+
+function resetAll() {
+  eliminated = []; log = [];
+  const rt = document.getElementById('result-text');
+  rt.textContent = 'Agrega nombres y gira';
+  rt.style.color = 'var(--text-hint)';
+  rt.style.fontSize = '15px';
+  document.getElementById('copy-btn').disabled = true;
+  document.getElementById('toast').textContent = '\u00a0';
+  render();
+}
+
+function render() {
+  renderList(); drawWheel();
+  document.getElementById('spin-btn').disabled = active().length < 2 || spinning;
+  const tot = names.length, eli = eliminated.length;
+  document.getElementById('counter').textContent = tot
+    ? `${tot - eli} restante${tot - eli !== 1 ? 's' : ''} / ${tot} total` : '';
+}
+
+function renderList() {
+  const ul = document.getElementById('names-list');
+  ul.innerHTML = '';
+  if (!names.length) {
+    ul.innerHTML = '<p class="empty-hint">Sin participantes aún</p>'; return;
+  }
+  names.forEach(n => {
+    const li = document.createElement('li');
+    if (eliminated.includes(n)) li.classList.add('elim');
+    li.innerHTML = `<span>${n}</span><button class="del-btn">✕</button>`;
+    li.querySelector('.del-btn').onclick = () => removeName(n);
+    ul.appendChild(li);
+  });
+}
+
+function drawWheel(hi = -1) {
+  const act = active();
+  const s = canvasEl.width;
+  const cx = s / 2, cy = s / 2, r = s / 2 - 8;
+  ctx.clearRect(0, 0, s, s);
+  if (!act.length) {
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+    ctx.fillStyle = '#E8E5E0'; ctx.fill();
+    ctx.fillStyle = '#AAA8A3';
+    ctx.font = `13px 'DM Sans', sans-serif`;
+    ctx.textAlign = 'center'; ctx.fillText('Sin participantes', cx, cy + 5); return;
+  }
+  const seg = (2 * Math.PI) / act.length;
+  act.forEach((n, i) => {
+    const ss = angle + i * seg, se = ss + seg;
+    const [fill, text] = COLORS[i % COLORS.length];
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, ss, se); ctx.closePath();
+    ctx.fillStyle = i === hi ? text : fill; ctx.fill();
+    ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(ss + seg / 2); ctx.textAlign = 'right';
+    const fs = Math.min(13, Math.max(8, (s * 0.65) / act.length));
+    ctx.font = `500 ${fs}px 'DM Sans', sans-serif`;
+    ctx.fillStyle = i === hi ? fill : text;
+    ctx.fillText(n.length > 14 ? n.slice(0, 13) + '…' : n, r - 8, 4);
+    ctx.restore();
+  });
+  const cr = Math.max(12, s * 0.065);
+  ctx.beginPath(); ctx.arc(cx, cy, cr, 0, 2 * Math.PI);
+  ctx.fillStyle = '#FFFFFF'; ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.12)'; ctx.lineWidth = 1; ctx.stroke();
+}
+
+function spin() {
+  const act = active();
+  if (act.length < 2 || spinning) return;
+  spinning = true;
+  document.getElementById('spin-btn').disabled = true;
+  document.getElementById('copy-btn').disabled = true;
+  document.getElementById('toast').textContent = '\u00a0';
+  const rt = document.getElementById('result-text');
+  rt.textContent = 'Girando...';
+  rt.style.color = 'var(--text-muted)';
+  rt.style.fontSize = '15px';
+
+  const totalSpins = (5 + Math.random() * 4) * 2 * Math.PI;
+  const duration = 3500 + Math.random() * 1500;
+  const t0 = performance.now(), a0 = angle;
+  const seg = (2 * Math.PI) / act.length;
+  const wi = Math.floor(Math.random() * act.length);
+  let fa = (-Math.PI / 2 - (wi * seg + seg / 2)) % (2 * Math.PI);
+  while (fa < a0 + totalSpins) fa += 2 * Math.PI;
+  const ease = t => 1 - Math.pow(1 - t, 4);
+
+  function frame(now) {
+    const t = Math.min((now - t0) / duration, 1);
+    angle = a0 + (fa - a0) * ease(t);
+    drawWheel(t > 0.92 ? wi : -1);
+    if (t < 1) { requestAnimationFrame(frame); return; }
+    angle = fa % (2 * Math.PI);
+    spinning = false;
+    const winner = act[wi];
+    eliminated.push(winner);
+    log.push(`#${eliminated.length} → ${winner}`);
+    rt.textContent = '🎉 ' + winner;
+    rt.style.color = 'var(--text)';
+    rt.style.fontSize = '20px';
+    document.getElementById('copy-btn').disabled = false;
+    render();
+    const rem = active();
+    if (rem.length === 1) {
+      document.getElementById('spin-btn').disabled = true;
+      log.push(`#${eliminated.length + 1} → ${rem[0]}  ★ Ganador final`);
+      setTimeout(() => {
+        eliminated.push(rem[0]);
+        rt.textContent = '🏆 Ganador final: ' + rem[0];
+        render();
+      }, 800);
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+function copyResult() {
+  if (!log.length) return;
+  const lines = [
+    '================================',
+    '     RESULTADOS DEL SORTEO      ',
+    '================================',
+    '',
+    `Participantes: ${names.length}`,
+    `Fecha: ${new Date().toLocaleString('es-SV')}`,
+    '',
+    'Orden de selección:',
+    '',
+    ...log,
+    '',
+    '================================'
+  ];
+  const text = lines.join('\n');
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text)
+      .then(() => showToast('✓ Copiado al portapapeles'))
+      .catch(() => fallbackCopy(text));
+  } else { fallbackCopy(text); }
+}
+
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try { document.execCommand('copy'); showToast('✓ Copiado al portapapeles'); }
+  catch { showToast('No se pudo copiar'); }
+  document.body.removeChild(ta);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  setTimeout(() => { t.textContent = '\u00a0'; }, 2800);
+}
+
+initTabs();
+render();
+</script>
+</body>
+</html>
