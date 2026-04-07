@@ -92,7 +92,7 @@
     padding: 2rem 1.5rem;
     display: flex;
     gap: 1.5rem;
-    align-items: flex-start;
+    align-items: stretch;
   }
 
   .panel {
@@ -103,6 +103,15 @@
     flex: 1;
     min-width: 220px;
     max-width: 260px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .names-list-wrap {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 
   .panel-title {
@@ -161,8 +170,9 @@
     display: flex;
     flex-direction: column;
     gap: 5px;
-    max-height: 300px;
+    flex: 1;
     overflow-y: auto;
+    min-height: 80px;
   }
 
   .names-list::-webkit-scrollbar { width: 4px; }
@@ -299,7 +309,9 @@
       <button class="btn-add" onclick="addName()">+ Agregar</button>
     </div>
     <div class="counter" id="counter"></div>
-    <ul class="names-list" id="names-list"></ul>
+    <div class="names-list-wrap">
+      <ul class="names-list" id="names-list"></ul>
+    </div>
     <button class="btn-reset" onclick="resetAll()">↺ Reiniciar todo</button>
   </div>
 
@@ -335,6 +347,8 @@ function switchTab(tab) {
   if (tab === 'ruleta') setTimeout(drawWheel, 50);
 }
 
+let lastWidth = window.innerWidth;
+
 function initTabs() {
   if (window.innerWidth <= 640) {
     document.getElementById('panel-ruleta').classList.add('tab-visible');
@@ -346,7 +360,14 @@ function initTabs() {
   resizeCanvas();
 }
 
-window.addEventListener('resize', initTabs);
+// Solo reaccionar a cambios de ANCHO — el teclado virtual solo cambia el alto
+window.addEventListener('resize', () => {
+  const currentWidth = window.innerWidth;
+  if (currentWidth !== lastWidth) {
+    lastWidth = currentWidth;
+    initTabs();
+  }
+});
 
 // ── Canvas responsive ──
 const canvasEl = document.getElementById('wheel');
